@@ -1,0 +1,3 @@
+[submodule "qingjian"]
+	path = qingjian
+	url = https://github.com/qingjian-team/qingjian
