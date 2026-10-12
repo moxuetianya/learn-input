@@ -266,3 +266,69 @@ rm -rf .git/modules/qingjian         # 手动清掉对象库（git rm 不会删�
 
 一句话总结：**`git submodule add` 负责「登记」，`absorbgitdirs` 负责「搬家」**——
 对先克隆后注册的仓库，两步缺一不可。
+
+---
+
+## 七、附：合并两条无关联历史（--allow-unrelated-histories）
+
+> 本节内容于 2026-10-12 在本仓库真实操作验证：把 `origin/master`（旧仓库
+> `feat: init`，单独 init 的独立历史）合并进本地 `main`（教程 + qingjian 子模块）。
+
+### 7.1 适用场景
+
+两个**分别 `git init`、没有共同祖先**的仓库要合成一条历史，且**双方的提交都要保留**。
+典型情况：本地已经开了一套新历史（如本仓库），远端还有一个更早的旧仓库，想把旧内容并进来。
+
+### 7.2 标准流程（以 A 为主仓库，合并 B）
+
+```bash
+# 在 A 仓库中
+git remote add other /path/to/B        # 或 B 的 remote 地址；已有 origin 就跳过
+git fetch other
+
+# 合并 B 的历史，允许无关联
+git merge other/master --allow-unrelated-histories
+
+# 用完删掉临时 remote
+git remote remove other
+```
+
+成功后 `git log --graph --oneline` 会出现一个**双根**的 merge commit：
+
+```text
+*   f67f4d6 merge: 合并 origin/master 的无关联历史（learn-input 旧仓库 init）
+|\
+| * 93f2f7c feat: init                        ← B 的根
+* 613c779 build: 以子模块方式引入 qingjian      ← A 的历史
+* 3a33b15 docs: qingjian 分析与 submodule absorbgitdirs 教程
+```
+
+### 7.3 有冲突时
+
+两边都有同名文件（如各自的 `README.md`）就会冲突，解决后**只 add 具体路径**再提交：
+
+```bash
+git status --short        # AA = 两边都新增了同名文件
+# ……手动编辑冲突文件……
+git add README.md         # 不要无脑 git add . —— 会把工作区无关的未跟踪文件一并暂存
+git commit                # 什么都不用 -m，git 会自动填好 "Merge ..." 结束合并
+```
+
+无冲突时 merge 直接完成，不需要手动 commit。
+
+### 7.4 版本说明（常见误区）
+
+- `--allow-unrelated-histories` 是 **Git 2.9（2016）新增**的参数；
+- **2.9 之前的旧版本默认就允许**合并无关联历史，不需要任何参数或提前 pull——
+  「老版本要先 git pull 或改配置」的说法是**反的**；
+- 2.9 起出于安全改为默认拒绝，必须显式带此参数。
+
+### 7.5 与子模块的相互影响（本仓库实录）
+
+- 合并对已登记的子模块（`qingjian` + `.gitmodules`）**无影响**，`git submodule status` 照常工作；
+- 但旧仓库里如果存在**没有 `.gitmodules` 登记的裸 gitlink**（`git add` 嵌入式仓库的产物，
+  即坑②的形态——本仓库 `third_party/` 下的 6 个目录就是），合并后它们原样保留，
+  `git submodule status` 会报错：
+  `fatal: 在 .gitmodules 中没有发现路径 'third_party/fcitx5' 的子模组映射`。
+- 想收编这些裸 gitlink：`git submodule add <上游URL> third_party/<名字>` 后
+  `git checkout <原 gitlink 记录的 hash>` 固定回原版本，再提交。
