@@ -1,3 +1,5 @@
 # 构建产物
 ibus-qingjian/ibus-engine-qingjian
 ibus-qingjian/qingjian.component
+# worktree 开发目录
+.worktree/

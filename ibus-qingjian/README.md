@@ -17,9 +17,15 @@ ibus-daemon ──exec──> ibus-engine-qingjian ──socket──> qingjian-
 ## 构建与安装
 
 ```sh
-make                        # 产出 ibus-engine-qingjian 和 qingjian.component
+make                        # 构建引擎与组件描述（版本取 git describe）
+make test                   # 协议冒烟：自动起停 qingjian server（DICT=real 用完整词库）
 sudo make install PREFIX=/usr/local   # 二进制进 /usr/local/bin，组件进 /usr/share/ibus/component/qingjian.xml
+ibus-engine-qingjian --version        # 远程排查时确认部署的版本
 ```
+
+可覆盖变量：`SERVER_BIN`（server 路径）、`QJ_DIR`（qingjian 仓库根）、
+`VERSION`（组件版本）。上级目录的 `Makefile` 已把这些串好
+（`make smoke` / `make deploy` / `make deploy-engine`）。
 
 注意三件事（全部实测踩过，详见 learn-input/docs/10-ibus-qingjian.md）：
 
@@ -45,10 +51,11 @@ server 必须在跑（`~/.local/qingjian/bin/qingjian-linux-server`，
 ## 测试
 
 ```sh
-python3 tests/smoke_test.py --socket /run/user/$(id -u)/qingjian.sock
+make test                # 样例词库（快）；make test DICT=real 用完整词库
 ```
 
-不走 IBus、直连 server 验证协议链路（握手、逐键候选、译词、空格上屏）。
+不走 IBus、直连 server 验证协议链路（握手、逐键候选、译词、空格上屏），
+server 由目标自动起停（独立 0700 socket 目录 + 临时 XDG）。
 
 ## 文件
 

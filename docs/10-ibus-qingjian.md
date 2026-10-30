@@ -78,15 +78,31 @@ server 常驻内存与引擎能力相关而与 IBus 无关。前端进程 RSS ~3
 5. `G_DECLARE_FINAL_TYPE` 链父类 autoptr：IBusEngine 是 DERIVABLE 类型，
    GLib 2.80 下会报 `glib_autoptr_clear_IBusEngine` 未声明，用传统类型样板最省事
 
-## 10.5 部署与验证（102 实录）
+## 10.5 构建与部署工作流
+
+仓库根的 `Makefile` 是统一入口（路径均可覆盖，`make help` 看全部）：
 
 ```bash
-# 一键：构建（101）→ rsync → 安装 → 注册 → 重启
-./scripts/deploy-102.sh
+make engine          # 只构建 C 前端（秒级）
+make server          # 构建 Rust server（release，增量）
+make data            # 检查产品数据是否就位，缺则给出下载指引
+make smoke           # 协议冒烟：自动起停 server 跑 tests/smoke_test.py（DICT=real 用完整词库）
+make deploy          # 全量部署到 DEST_HOST（默认 peter@192.168.2.102）
+make deploy-engine   # 只重编重装引擎：迭代 C 前端时的秒级路径
+```
 
-# ssh 远程检查
-ibus engine            # → qingjian（已激活）
-systemctl --user is-active qingjian          # server 在跑
+`scripts/deploy-102.sh` 的全量流程：本机构建（101 与 102 同为 Ubuntu 24.04 /
+glibc 2.39，产物直接可用）→ rsync（增量）→ sudo 安装引擎与组件 → 注册
+systemd 用户服务与输入源 → 清 registry 缓存并重启 GNOME 的 ibus-daemon →
+**自动激活 `ibus engine qingjian` 并验证三件事**：引擎进程、server 状态、
+引擎↔server 的 ESTABLISHED 连接。版本号取 `git describe`，注入组件描述与
+引擎二进制（`ibus-engine-qingjian --version` 远程可查）。
+
+ssh 远程排查：
+
+```bash
+ibus engine                                   # → qingjian
+systemctl --user is-active qingjian           # server 在跑
 ss -x | grep qingjian.sock                    # 引擎↔server ESTABLISHED
 ~/.local/state/qingjian/logs/server.*.log     # 词库/模型加载日志
 ```
@@ -124,3 +140,19 @@ ss -x | grep qingjian.sock                    # 引擎↔server ESTABLISHED
 | server 启动 | 词库 mmap + LM 5–10 ms + 神经模型后台 60–80 ms（不挡输入） |
 | 组句轮询 | 80 ms/拍，仅组句期间；帧 revision 不变不重画 |
 | 云联想 | 300 ms 停顿防抖（qingjian-predict 后台线程），不阻塞候选 |
+
+## 10.8 动手实验 💻
+
+1. **协议冒烟（不碰桌面）**：`make smoke`——观察握手三步（OpenSession /
+   LinuxHello / Capabilities）与逐键候选、译词、空格上屏；再跑
+   `make smoke DICT=real` 对比完整词库下的整句转换。
+2. **kill server 观察降级**：`systemctl --user stop qingjian` 后在桌面打字——
+   前端应放行全部按键（英文直出），`systemctl --user start qingjian`
+   后无需任何操作自动恢复（下一个按键触发重连握手）。
+3. **看一次协议对话**：`strace -f -e trace=sendto,recvfrom -s 200 \
+   -p $(pgrep -f '^/usr/local/bin/ibus-engine') 2>&1 | head`，在桌面敲
+   `nihao`，对照 10.4 的事件构造读 JSON 帧（长度前缀 + `LinuxEvent`）。
+4. **验证 registry 缓存坑**：把 `/usr/share/ibus/component/qingjian.xml`
+   改名 `.component`，清 `~/.cache/ibus/bus/registry` 并重启 daemon，
+   `ibus list-engine | grep qingjian` 应消失——再改回来，加深 10.4 第 1
+   条坑的印象。

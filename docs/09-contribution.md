@@ -155,6 +155,9 @@ libime_pinyindict my-history.txt ~/.local/share/fcitx5/pinyin/user.dict
 | 07 | 词库格式源码级对比与维护工作流 |
 | 08 | 分层调试方法论与故障树 |
 | 09 | 本章：选型与贡献路径 |
+| 10 | 亲手做一个：qingjian 的 IBus 前端，从协议到部署 |
 
 从按键到词库，整条链路的所有"黑盒"都已打开。剩下的深度，去
-`third_party/` 的源码和上游 issue 里挖吧。
+`third_party/` 的源码和上游 issue 里挖吧——或者直接读本仓库的实践产出
+[ibus-qingjian/](../ibus-qingjian/)（配套 [10-ibus-qingjian.md](10-ibus-qingjian.md)），
+那里有一条从零到能用的完整路径。

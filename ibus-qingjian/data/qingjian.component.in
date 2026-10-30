@@ -8,8 +8,8 @@
 <component>
   <name>org.qingjian.IBus.Qingjian</name>
   <description>Qingjian pinyin IME for IBus (learn-input build)</description>
-  <exec>/usr/local/bin/ibus-engine-qingjian</exec>
-  <version>0.1.0</version>
+  <exec>@bindir@/ibus-engine-qingjian</exec>
+  <version>@version@</version>
   <author>learn-input</author>
   <license>GPL-3.0-or-later</license>
   <homepage>https://github.com/qingjian-team/qingjian</homepage>

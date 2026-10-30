@@ -12,7 +12,11 @@ static void disconnected(IBusBus *bus, gpointer user_data) {
 
 gint main(gint argc, gchar **argv) {
     (void)argc;
-    (void)argv;
+    if (argc > 1 && (g_strcmp0(argv[1], "--version") == 0
+                     || g_strcmp0(argv[1], "-V") == 0)) {
+        g_print("ibus-engine-qingjian %s\n", QJ_VERSION);
+        return 0;
+    }
     ibus_init();
     IBusBus *bus = ibus_bus_new();
     if (bus == NULL || !ibus_bus_is_connected(bus)) {

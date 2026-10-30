@@ -8,6 +8,7 @@
 2. **框架对比**：IBus 与 Fcitx5 两大输入法框架的架构、协议、生态对比，如何选型。
 3. **词库内幕**：输入法词库（系统词库 / 用户词库）的存储格式、维护工具链——结合 libpinyin 与 libime 源码剖析，回答"为什么 ibus-libpinyin 的词库不好维护"。
 4. **上手贡献**：如果想参与开源输入法项目（提交词库、改引擎），从哪里开始。
+5. **动手做一个**：学完不是终点——第 10 章带读者给 qingjian 写一个真正能用的 IBus 前端并部署到实机（`ibus-qingjian/`）。
 
 ## 文档地图（建议按序阅读）
 
@@ -44,10 +45,19 @@
 > 本环境是 QEMU 虚拟机，正好覆盖了三类内核输入驱动（AT/PS2、USB HID、uinput），
 > 且本机运行的 xremap 就是一个 uinput 虚拟键盘设备，教程多处用它做实例。
 
+第 10 章的实践项目跨三台机器（101/102 同为 Ubuntu 24.04 / glibc 2.39，产物互通）：
+
+| 机器 | 角色 |
+|---|---|
+| `his-host`（192.168.2.101） | 构建机：编译 Rust server 与 C 前端 |
+| `xiao`（192.168.2.102） | 部署机：GNOME 46 Wayland + IBus 1.5.29，实机验证 |
+| QEMU 虚拟机 | 教程 01–09 章的讲解环境 |
+
 ## 仓库结构
 
 ```
 learn-input/
+├── Makefile                             # 统一构建入口（engine/server/smoke/deploy）
 ├── README.md                            # 本文件
 ├── linux-chinese-pinyin-vim-config.md   # 入门配置笔记（已有）
 ├── docs/                                # 教程正文（01–10）
@@ -81,6 +91,14 @@ learn-input/
 |---|---|
 | `ibus2fcitx5.py` | ibus-libpinyin 导出的用户词库文本 → fcitx5/libime 文本词库格式（用法见 docs/09 第 5 节，`--test` 自测） |
 | `deploy-102.sh` | 构建 ibus-qingjian + qingjian server，部署到 192.168.2.102 并注册 IBus 组件（用法见 docs/10 第 5 节） |
+
+日常开发从根目录的 `Makefile` 进（`make help` 看全部目标）：
+
+```sh
+make engine / server      # 分别构建 C 前端 / Rust server（增量）
+make smoke                # 协议冒烟：自动起停 server（DICT=real 用完整词库）
+make deploy               # 全量部署到 102；make deploy-engine 只换引擎（迭代秒级路径）
+```
 
 ## 全景图（剧透版）
 

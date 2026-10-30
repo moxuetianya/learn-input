@@ -165,6 +165,13 @@ GNOME 注意事项：shell 内嵌的 IBus 与 gsettings input-sources 强耦合�
 生态（fcitx5 + libime + chinese-addons）是更合适的选择**——理由在第 07、09
 章用源码与数据展开。
 
+**一个重要的例外**：目标桌面是 **GNOME（Wayland）** 时，结论反转——GNOME
+Shell 只内建了 text-input-v3 → ibus 这条通路，没有 input-method-v2 服务端，
+fcitx5 在 GNOME Wayland 下要走 XWayland 或对抗 shell 集成；而给 ibus 写
+引擎进程反而"零对抗"：注册组件即得原生候选窗与输入源管理。这个判断在
+[10-ibus-qingjian.md](10-ibus-qingjian.md) 里用一次完整实践验证过
+（含 GNOME 下 ibus-daemon 由 systemd 用户单元管理等部署细节）。
+
 ## 7. 动手实验 💻
 
 1. `ps aux | grep -E "ibus|fcitx"`：对照 2.1 拓扑确认本机进程；切一次
