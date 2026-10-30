@@ -22,6 +22,7 @@
 | 07 | [词库内幕与维护](docs/07-dictionary-internals.md) | libpinyin / libime 词库格式源码解析、工具链、迁移与同步实践 | 3 |
 | 08 | [调试工具箱](docs/08-debugging.md) | 按层组织：evtest → libinput → wev → ibus/fcitx5 日志，常见故障树 | 1, 2 |
 | 09 | [参与开源贡献指南](docs/09-contribution.md) | 项目活跃度、代码规模实测、构建方法、上手路径与方案选择 | 4 |
+| 10 | [实践：ibus-qingjian](docs/10-ibus-qingjian.md) | 完整实战：给 qingjian 写 IBus 前端 + server 接云联想，含踩坑记录与 ibus/fcitx 生态分析 | 2, 4 |
 
 另有实践性配置笔记：[linux-chinese-pinyin-vim-config.md](linux-chinese-pinyin-vim-config.md)（IBus + Vim 自动切换的入门操作手册）。
 
@@ -49,8 +50,11 @@
 learn-input/
 ├── README.md                            # 本文件
 ├── linux-chinese-pinyin-vim-config.md   # 入门配置笔记（已有）
-├── docs/                                # 教程正文（01–09）
-├── scripts/                             # 实用脚本（词库迁移等）
+├── docs/                                # 教程正文（01–10）
+├── ibus-qingjian/                       # 实战产出：qingjian 的 IBus 前端（C）+ 协议冒烟测试
+├── scripts/                             # 实用脚本（词库迁移、102 部署）
+├── qingjian/                            # submodule：青简输入法（Core/词库/译词/云联想；本仓库给它的
+│                                        #   apps/linux/server 打了云联想补丁，见 docs/10 第 3 节）
 └── third_party/                         # 上游源码（浅克隆，供源码走读引用）
     ├── ibus/                 # IBus 框架本体（libibus/daemon/引擎API）
     ├── libpinyin/            # 拼音引擎核心库（词库格式在这）
@@ -76,6 +80,7 @@ learn-input/
 | 脚本 | 用途 |
 |---|---|
 | `ibus2fcitx5.py` | ibus-libpinyin 导出的用户词库文本 → fcitx5/libime 文本词库格式（用法见 docs/09 第 5 节，`--test` 自测） |
+| `deploy-102.sh` | 构建 ibus-qingjian + qingjian server，部署到 192.168.2.102 并注册 IBus 组件（用法见 docs/10 第 5 节） |
 
 ## 全景图（剧透版）
 
