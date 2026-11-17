@@ -215,6 +215,10 @@ X11 下没有 compositor 中枢，X server 兼任：`evdev→(server内)XKB→XK
   memfd 共享给应用，双方各自维护状态机；
 - `wl_keyboard` 发原始 keycode + 修饰键四元组，serial 配对事件与请求；
 - 应用侧 GtkIMContext 接口永远在，"没有输入法"只是它的实现是 Simple；
-- GNOME 的键盘布局在 gsettings，`localectl` 管不到 Wayland 会话。
+- GNOME 的键盘布局在 gsettings，`localectl` 管不到 Wayland 会话；
+- 全景一句话：libinput 只活在 compositor、libxkbcommon 只活在应用——
+  两级翻译各管一半，跨 Wayland socket 的契约只有 keycode、keymap 与
+  （有 IME 时的）成品字符串。这条分界线在输入法介入后于何处断开，
+  见 04 章 §7"分野"。
 
 下一章是本教程的协议深水区：[04-wayland-ime-protocols.md](04-wayland-ime-protocols.md)

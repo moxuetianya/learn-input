@@ -195,6 +195,44 @@ GTK 应用        mutter/gnome-shell           ibus-daemon → 引擎进程
 （GTK 窗口 + layer-shell/定位变通）。若启用 fcitx5 `ibusfrontend`，则
 gnome-shell 以为自己在和 ibus 说话——fcitx5 借壳获得 shell 级集成。
 
+### 分野：键在哪被截住？——一问穿透三形态
+
+问一个直击本质的问题：**开了输入法，应用还能从 `wl_keyboard` 收到
+keycode 吗？** 三种形态答案不同，而全部差异只有一个来源——**谁截住了
+键**。libinput 那一半（03 章）永远不变：compositor 始终第一个拿到全部
+原始键；变的只是截住点，与其后的搬运协议：
+
+| | 形态一：协议路线（sway + fcitx5） | 形态二/三：DBus 路线（GNOME + ibus/fcitx5） |
+|---|---|---|
+| **截住位置** | **compositor 内**（键分发策略层，grab 先于转发） | **应用进程内**（GTK/Qt IM 模块，toolkit 事件层） |
+| **搬运协议** | Wayland：text_input_v3 + input_method_v2 | DBus：`org.freedesktop.IBus` / `org.fcitx.Fcitx5` |
+| **compositor 知情吗** | 全程知情，activate/preedit/commit 都经它手 | 毫不知情，`wl_keyboard.key` 照发给焦点窗口 |
+| **被消费的键** | **到不了应用**——compositor 侧吃掉，应用只见 preedit/commit | **照样到达应用进程**，只是被进程内 IM 模块截走，编辑框看不见 |
+| **候选窗定位** | 协议级：`set_cursor_rectangle` → input_panel/layer-shell | 自谋出路：GTK 模块拿光标位置，或 gnome-shell 代理 panel |
+| **焦点跟踪** | compositor 原生（activate/deactivate） | 应用主动上报 focus_in |
+| **兼容性** | 取决于 compositor 实现 input-method | 只要用 GTK/Qt 就通（主流路线的根源，§5 三条理由） |
+
+对"两级翻译"（libinput 管 compositor 侧、xkbcommon 管应用侧）的影响：
+
+- **形态一断在服务端**：被 grab 的键在 compositor 侧就被 IM 消费，应用的
+  xkbcommon 见不到它们——对这些键两级翻译退化为服务端一级，text_input
+  通道直接送成品字符串；
+- **形态二/三断在应用内**：`wl_keyboard` + xkb 翻译照常走完
+  （keycode→keysym→字符都算出来了），IM 模块拿翻译结果去查词库——
+  IBus 的 `ProcessKeyEvent` 传的已是按键语义。
+
+推论：**IME 开启后 `wl_keyboard` 并不关闭，它只是从"文字的来源"降级为
+"纯按键语义的来源"**。编辑框必须双通道并存：
+
+| 通道 | 管什么 | IME 开启后 |
+|---|---|---|
+| `wl_keyboard` + xkb | "键"：快捷键、光标移动、终端/游戏全量按键 | 协议路线下只剩未被消费的键；DBus 路线下全量仍在 |
+| `zwp_text_input_v3` | "字"：组合好的字符串 | 拼音/日文正文的唯一来源 |
+
+> **模糊地带**：GNOME 上 GTK 应用也可走 text_input_v3（mutter 实现了它），
+> mutter 把文本输入转发给 shell 内嵌的 ibus——截住点又回到 compositor 侧。
+> 可见分类的关键维度不是"哪个桌面"，而是"谁截住了键"。
+
 ## 8. 动手实验 💻
 
 ```bash
@@ -219,6 +257,9 @@ $ busctl --user monitor 2>/dev/null | grep -E "IBus|Fcitx" &
 - GNOME 不实现 input-method，靠 shell 内嵌 IBus；这是 IBus 强绑定 GNOME、
   fcitx5 必须自带五种前端的历史原因；
 - 双框架都有绕过 compositor 的 DBus 应用侧通道，这是当前实际主流路线；
-- 一次拼音输入的消息序列在三种部署形态下形状不同、语义同源。
+- 一次拼音输入的消息序列在三种部署形态下形状不同、语义同源；
+- 三形态的分野在**截住点**：协议路线在 compositor 截键（被消费的键到不了
+  应用），DBus 路线在应用进程内截（wl_keyboard 全量照达）；IME 开启后
+  wl_keyboard 并不关闭——"键"与"字"双通道并存（§7 分野表）。
 
 下一章正式对比两大框架：[05-ibus-vs-fcitx5.md](05-ibus-vs-fcitx5.md)

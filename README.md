@@ -17,7 +17,7 @@
 | 01 | [全景：一次按键的旅程](docs/01-overview.md) | 分层模型、四条典型链路、核心概念（keycode/keysym/preedit/commit） | 1 |
 | 02 | [内核输入子系统](docs/02-kernel-input.md) | i8042/usbhid → input core → evdev → uinput，6.12 内核源码走读 | 1, 3 |
 | 03 | [不配输入法时的链路](docs/03-userspace-no-ime.md) | libinput、XKB、wl_keyboard，事件如何到达应用 | 1, 3 |
-| 04 | [Wayland 输入法协议森林](docs/04-wayland-ime-protocols.md) | text-input v1/v2/v3、input-method v1/v2、各桌面支持矩阵 | 1, 2 |
+| 04 | [Wayland 输入法协议森林](docs/04-wayland-ime-protocols.md) | text-input v1/v2/v3、input-method v1/v2、各桌面支持矩阵、三形态分野（键在哪被截住） | 1, 2 |
 | 05 | [IBus 与 Fcitx5 架构对比](docs/05-ibus-vs-fcitx5.md) | 进程模型、DBus 协议、引擎 API、生态、选型建议 | 2 |
 | 06 | [配置输入法后的完整链路](docs/06-ime-chains.md) | GTK/Qt 前端模块、DBus、XWayland/XIM、Electron、Flatpak 路径复盘 | 1, 2 |
 | 07 | [词库内幕与维护](docs/07-dictionary-internals.md) | libpinyin / libime 词库格式源码解析、工具链、迁移与同步实践 | 3 |
